@@ -1,0 +1,60 @@
+success socket()
+success bind()
+success listen()
+success accept()
+
+< request_message >
+[DELETE /index.html HTTP/1.1
+Host: localhost
+content-type: etc/html, text/plain
+
+<html>
+body
+</html>
+]
+
+< request_message in hex >
+[  
+4445 4c45 5445 202f  696e 6465 782e 6874  
+6d6c 2048 5454 502f  312e 310d 0a48 6f73  
+743a 206c 6f63 616c  686f 7374 0d0a 636f  
+6e74 656e 742d 7479  7065 3a20 6574 632f  
+6874 6d6c 2c20 7465  7874 2f70 6c61 696e  
+0d0a 0d0a 3c68 746d  6c3e 0d0a 626f 6479  
+0d0a 3c2f 6874 6d6c  3e0d 0a]
+
+< request describe >
+_method: [2]
+_request_target: [/index.html]
+_major_version: [1]
+_minor_version: [1]
+
+header filed: [Host: localhost]
+header filed: [content-type: etc/html, text/plain]
+
+_body: [<html>
+body
+</html>
+]
+
+< response describe >
+_major_version: [1]
+_minor_version: [1]
+_status_code: [200]
+_reason_phrase: [OK]
+
+header filed: [Server: custom server]
+header filed: [Date: Mon, 25 Apr 2022 05:38:34 GMT]
+header filed: [Content-Type: text/html]
+header filed: [Last-Modified: Tue, 04 Dec 2018 14:52:24 GMT]
+
+_body: [<!DOCFTYPE html><html></html>]
+
+< response message >
+HTTP/1.1 200 OK
+Server: custom server
+Date: Mon, 25 Apr 2022 05:38:34 GMT
+Content-Type: text/html
+Last-Modified: Tue, 04 Dec 2018 14:52:24 GMT
+
+<!DOCFTYPE html><html></html>

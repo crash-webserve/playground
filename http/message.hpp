@@ -1,5 +1,8 @@
+#ifndef MESSAGE_HPP
+#define MESSAGE_HPP
+
 #include <iostream>
-#include <multimap>
+#include <vector>
 
 namespace HTTP {
 
@@ -10,10 +13,17 @@ namespace HTTP {
 //	//  Host: localhost
 //	//
 //	//  ";
-//	Request request(request_string);
-//	if (request.getMethod() == Request.GET)
-//		server.runGetMessage(request);
+//	HTTP::Request request(request_string);
+//	if (request.getMethod() == HTTP::Request::GET)
+//		server.runMessage(request, response);
 class Request {
+public:
+	enum Method {
+		GET,
+		POST,
+		DELETE,
+	};
+
 private:
 	Method _method;
 	std::string _request_target;
@@ -25,56 +35,30 @@ private:
 	std::string _body;
 
 public:
-	enum Method {
-		GET,
-		POST,
-		DELETE,
-	};
-
-	explicit Request(std::string& string);
+	explicit Request(const std::string& string);
 
 	Method getMethod() const;
+
+	void describe() const;	// this is for debug usage
 };
 
 // class to store data of HTTP response message.
 // Example:
-//	Response response = server.runMessage(request);
-//	string response_string = response.convert_to_string();
-//	send(client_socket, response_string, response_string.length(), MSG_DONTWAIT);
-//	// example of data in response_string
+//  server.runRequest(request, response);
+//  std::string response_message = response.convertToString();
+//  event_count = kevent();
+//  for (int i = 0; i < event_count; ++i) {
+//  	if (event_array[i].ident == fd_to_send)
+//  		send(fd_to_send, response_message, response_message.length());
+//  }
+//	// example of data in response_message
 //	// "HTTP/1.1 200 OK
 //	//  Server: nginx/1.14.2
-//	//  Content-Type: text/html
-//	//  Content-Length: 612
-//	//  Last-Modified: Tue, 04 Dec 2018 14:52:24 GMT
-//	//  Connection: keep-alive
-//	//  ETag: "5c0694a8-264"
+//	//	...
 //	//  Accept-Ranges: bytes
 //	//
 //	//  <!DOCTYPE html>
-//  //  <html>
-//  //  <head>
-//  //  <title>Welcome to nginx!</title>
-//  //  <style>
-//  //      body {
-//  //          width: 35em;
-//  //          margin: 0 auto;
-//  //          font-family: Tahoma, Verdana, Arial, sans-serif;
-//  //      }
-//  //  </style>
-//  //  </head>
-//  //  <body>
-//  //  <h1>Welcome to nginx!</h1>
-//  //  <p>If you see this page, the nginx web server is successfully installed and
-//  //  working. Further configuration is required.</p>
-//  //  
-//  //  <p>For online documentation and support please refer to
-//  //  <a href="http://nginx.org/">nginx.org</a>.<br/>
-//  //  Commercial support is available at
-//  //  <a href="http://nginx.com/">nginx.com</a>.</p>
-//  //  
-//  //  <p><em>Thank you for using nginx.</em></p>
-//  //  </body>
+//  //  ...
 //  //  </html>";
 class Response {
 private:
@@ -88,7 +72,42 @@ private:
 	std::string _body;
 
 public:
+	// setter
+	void setMajorVersion(char new_value);
+	void setMinorVersion(char new_value);
+	void setStatusCode(int new_value);
+	void setReasonPhrase(const std::string& new_value);
+	void clearHeaderFileVector();
+	void appendHeaderFieldVector(const std::string& new_value);
+	void setBody(const std::string& new_value);
+
+	// generate response message
 	std::string convertToString() const;
+
+	void describe() const;	// this is for debug usage
 };
 
+};	// namespace HTTP
+
+// class for to interact with messages
+// Example:
+//  server.runRequest(request, response);
+//  std::string response_message = response.convertToString();
+//  event_count = kevent();
+//  for (int i = 0; i < event_count; ++i) {
+//  	if (event_array[i].ident == fd_to_send)
+//  		send(fd_to_send, response_message, response_message.length());
+//  }
+class Server {
+private:
+	int runGetRequest(const HTTP::Request& request, HTTP::Response& response);
+	int runPostRequest(const HTTP::Request& request, HTTP::Response& response);
+	int runDeleteRequest(const HTTP::Request& request, HTTP::Response& response);
+	// other members
+
+public:
+	int runRequest(const HTTP::Request& request, HTTP::Response& response);
+	// other members
 };
+
+#endif
