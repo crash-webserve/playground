@@ -1,5 +1,5 @@
-#ifndef MESSAGE_HPP
-#define MESSAGE_HPP
+#ifndef MESSAGE_HPP_
+#define MESSAGE_HPP_
 
 #include <iostream>
 #include <vector>
@@ -38,6 +38,8 @@ public:
 	explicit Request(const std::string& string);
 
 	Method getMethod() const;
+	char getMajorVersion() const;
+	char getMinorVersion() const;
 
 	void describe() const;	// this is for debug usage
 };
@@ -77,7 +79,7 @@ public:
 	void setMinorVersion(char new_value);
 	void setStatusCode(int new_value);
 	void setReasonPhrase(const std::string& new_value);
-	void clearHeaderFileVector();
+	void clearHeaderFieldVector();
 	void appendHeaderFieldVector(const std::string& new_value);
 	void setBody(const std::string& new_value);
 
@@ -110,4 +112,4 @@ public:
 	// other members
 };
 
-#endif
+#endif	// MESSAGE_HPP_

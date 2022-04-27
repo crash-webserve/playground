@@ -78,6 +78,18 @@ HTTP::Request::Request(const std::string& string) {
 	this->_body = string.substr(ss.tellg());
 }
 
+HTTP::Request::Method HTTP::Request::getMethod() const {
+	return this->_method;
+}
+
+char HTTP::Request::getMajorVersion() const {
+	return this->_major_version;
+}
+
+char HTTP::Request::getMinorVersion() const {
+	return this->_minor_version;
+}
+
 void HTTP::Request::describe() const {
 	cout << "_method: [" << this->_method << "]" << endl;
 	cout << "_request_target: [" << this->_request_target << "]" << endl;
@@ -107,7 +119,7 @@ void HTTP::Response::setReasonPhrase(const std::string& new_value) {
 	this->_reason_phrase = new_value;
 }
 
-void HTTP::Response::clearHeaderFileVector() {
+void HTTP::Response::clearHeaderFieldVector() {
 	this->_header_field_vector.clear();
 }
 
@@ -168,12 +180,12 @@ void describeStringVector(const std::vector<std::string>& vector) {
 
 int Server::runGetRequest(const HTTP::Request& request, HTTP::Response& response) {
 	(void)request;
-	response.setMajorVersion('1');
-	response.setMinorVersion('1');
+	response.setMajorVersion(request.getMajorVersion());
+	response.setMinorVersion(request.getMinorVersion());
 	response.setStatusCode(200);
 	response.setReasonPhrase("OK");
 
-	response.clearHeaderFileVector();
+	response.clearHeaderFieldVector();
 	response.appendHeaderFieldVector("Server: custom server");
 	response.appendHeaderFieldVector("Date: Mon, 25 Apr 2022 05:38:34 GMT");
 	response.appendHeaderFieldVector("Content-Type: text/html");
