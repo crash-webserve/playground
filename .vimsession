@@ -106,13 +106,13 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe '1resize ' . ((&lines * 1 + 49) / 98)
-exe 'vert 1resize ' . ((&columns * 90 + 182) / 364)
-exe '2resize ' . ((&lines * 94 + 49) / 98)
-exe 'vert 2resize ' . ((&columns * 90 + 182) / 364)
-exe 'vert 3resize ' . ((&columns * 90 + 182) / 364)
-exe 'vert 4resize ' . ((&columns * 90 + 182) / 364)
-exe 'vert 5resize ' . ((&columns * 91 + 182) / 364)
+exe '1resize ' . ((&lines * 28 + 29) / 59)
+exe 'vert 1resize ' . ((&columns * 55 + 112) / 225)
+exe '2resize ' . ((&lines * 28 + 29) / 59)
+exe 'vert 2resize ' . ((&columns * 55 + 112) / 225)
+exe 'vert 3resize ' . ((&columns * 56 + 112) / 225)
+exe 'vert 4resize ' . ((&columns * 56 + 112) / 225)
+exe 'vert 5resize ' . ((&columns * 55 + 112) / 225)
 argglobal
 setlocal autoindent
 setlocal backupcopy=
@@ -228,12 +228,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 5 - ((0 * winheight(0) + 0) / 1)
+let s:l = 1 - ((0 * winheight(0) + 14) / 28)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-5
-normal! 028|
+1
+normal! 0
 wincmd w
 argglobal
 if bufexists("~/git/webserv/main.cpp") | buffer ~/git/webserv/main.cpp | else | edit ~/git/webserv/main.cpp | endif
@@ -351,12 +351,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 139 - ((71 * winheight(0) + 47) / 94)
+let s:l = 1 - ((0 * winheight(0) + 14) / 28)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-139
-normal! 017|
+1
+normal! 0
 lcd ~/git/webserv/http
 wincmd w
 argglobal
@@ -475,12 +475,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 155 - ((60 * winheight(0) + 48) / 96)
+let s:l = 1 - ((0 * winheight(0) + 28) / 57)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-155
-normal! 041|
+1
+normal! 0
 lcd ~/git/webserv/http
 wincmd w
 argglobal
@@ -599,7 +599,7 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 1 - ((0 * winheight(0) + 48) / 96)
+let s:l = 1 - ((0 * winheight(0) + 28) / 57)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -607,7 +607,7 @@ normal! zt
 normal! 0
 wincmd w
 argglobal
-terminal ++curwin ++cols=91 ++rows=96 
+terminal ++curwin ++cols=55 ++rows=57 
 setlocal autoindent
 setlocal backupcopy=
 setlocal nobinary
@@ -721,7 +721,7 @@ setlocal nowinfixheight
 setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
-let s:l = 1 - ((0 * winheight(0) + 48) / 96)
+let s:l = 1 - ((0 * winheight(0) + 28) / 57)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -729,20 +729,19 @@ normal! zt
 normal! 0
 lcd ~/git/webserv/http
 wincmd w
-4wincmd w
-exe '1resize ' . ((&lines * 1 + 49) / 98)
-exe 'vert 1resize ' . ((&columns * 90 + 182) / 364)
-exe '2resize ' . ((&lines * 94 + 49) / 98)
-exe 'vert 2resize ' . ((&columns * 90 + 182) / 364)
-exe 'vert 3resize ' . ((&columns * 90 + 182) / 364)
-exe 'vert 4resize ' . ((&columns * 90 + 182) / 364)
-exe 'vert 5resize ' . ((&columns * 91 + 182) / 364)
+exe '1resize ' . ((&lines * 28 + 29) / 59)
+exe 'vert 1resize ' . ((&columns * 55 + 112) / 225)
+exe '2resize ' . ((&lines * 28 + 29) / 59)
+exe 'vert 2resize ' . ((&columns * 55 + 112) / 225)
+exe 'vert 3resize ' . ((&columns * 56 + 112) / 225)
+exe 'vert 4resize ' . ((&columns * 56 + 112) / 225)
+exe 'vert 5resize ' . ((&columns * 55 + 112) / 225)
 tabnext 1
 badd +35 ~/git/webserv/Makefile
-badd +7 ~/git/webserv/http/message.hpp
-badd +0 ~/git/webserv/http/message.cpp
+badd +1 ~/git/webserv/main.cpp
+badd +1 ~/git/webserv/http/message.cpp
+badd +0 ~/git/webserv/http/message.hpp
 badd +1 ~/git/webserv
-badd +0 ~/git/webserv/main.cpp
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0
   silent exe 'bwipe ' . s:wipebuf
 endif

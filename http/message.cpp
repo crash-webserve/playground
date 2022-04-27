@@ -1,14 +1,14 @@
 #include <iostream>
 #include <sstream>
 #include <cassert>
-#include <vector>
+#include <map>
 #include "message.hpp"
 
 using std::cin;
 using std::cout;
 using std::endl;
 
-static void describeStringVector(const std::vector<std::string>& vector);
+static void describeStringMap(const std::map<std::string, std::string>& map);
 
 const int NORMAL = 0;
 const int ERROR = -1;
@@ -66,7 +66,10 @@ HTTP::Request::Request(const std::string& string) {
 			ss.get();
 			break;
 		}
-		this->_header_field_vector.push_back(token);
+		std::string::size_type colon_position = token.find(':');
+		const std::string key = token.substr(0, colon_position);
+		const std::string value = token.substr(colon_position + 2);
+		this->_header_field_map[key] = value;
 		ss.get();
 	}
 
@@ -97,10 +100,14 @@ void HTTP::Request::describe() const {
 	cout << "_minor_version: [" << this->_minor_version << "]" << endl;
 	cout << endl;
 
-	describeStringVector(this->_header_field_vector);
+	describeStringMap(this->_header_field_map);
 	cout << endl;
 
 	cout << "_body: [" << this->_body << "]" << endl;
+}
+
+HTTP::Response::Response() {
+	this->_status_code[3] = '\0';
 }
 
 void HTTP::Response::setMajorVersion(char new_value) {
@@ -111,20 +118,20 @@ void HTTP::Response::setMinorVersion(char new_value) {
 	this->_minor_version = new_value;
 }
 
-void HTTP::Response::setStatusCode(int new_value) {
-	this->_status_code = new_value;
+void HTTP::Response::setStatusCode(const char* new_value) {
+	memcpy(this->_status_code, new_value, 3);
 }
 
 void HTTP::Response::setReasonPhrase(const std::string& new_value) {
 	this->_reason_phrase = new_value;
 }
 
-void HTTP::Response::clearHeaderFieldVector() {
-	this->_header_field_vector.clear();
+void HTTP::Response::clearHeaderFieldMap() {
+	this->_header_field_map.clear();
 }
 
-void HTTP::Response::appendHeaderFieldVector(const std::string& new_value) {
-	this->_header_field_vector.push_back(new_value);
+void HTTP::Response::appendHeaderFieldMap(const std::string& key, const std::string& value) {
+	this->_header_field_map[key] = value;
 }
 
 void HTTP::Response::setBody(const std::string& new_value) {
@@ -139,14 +146,14 @@ std::string HTTP::Response::convertToString() const {
 	response_message += ".";
 	response_message += this->_minor_version;
 	response_message += " ";
-	std::stringstream ss;
-	ss << this->_status_code;
-	response_message += ss.str();
+	response_message += this->_status_code;
 	response_message += " ";
 	response_message += this->_reason_phrase;
 	response_message += "\r\n";
-	for (std::vector<std::string>::const_iterator it = this->_header_field_vector.begin(); it != this->_header_field_vector.end(); ++it) {
-		response_message += *it;
+	for (std::map<std::string, std::string>::const_iterator it = this->_header_field_map.begin(); it != this->_header_field_map.end(); ++it) {
+		response_message += it->first;
+		response_message += ": ";
+		response_message += it->second;
 		response_message += "\r\n";
 	}
 	response_message += "\r\n";
@@ -158,23 +165,23 @@ std::string HTTP::Response::convertToString() const {
 void HTTP::Response::describe() const {
 	cout << "_major_version: [" << this->_major_version << "]" << endl;
 	cout << "_minor_version: [" << this->_minor_version << "]" << endl;
-	std::stringstream ss;
-	ss << this->_status_code;
-	cout << "_status_code: [" << ss.str() << "]" << endl;
+	cout << "_status_code: [" << this->_status_code << "]" << endl;
 	cout << "_reason_phrase: [" << this->_reason_phrase << "]" << endl;
 	cout << endl;
 
-	describeStringVector(this->_header_field_vector);
+	describeStringMap(this->_header_field_map);
 	cout << endl;
 
 	cout << "_body: [" << this->_body << "]" << endl;
 }
 
-void describeStringVector(const std::vector<std::string>& vector) {
-	for (std::vector<std::string>::const_iterator it = vector.begin(); it != vector.end(); ++it) {
-		cout << "header field: [";
-		cout << *it;
-		cout << "]" << endl;
+void describeStringMap(const std::map<std::string, std::string>& map) {
+	for (std::map<std::string, std::string>::const_iterator it = map.begin(); it != map.end(); ++it) {
+		cout << "header field: { key: [";
+		cout << it->first;
+		cout << "], value: [";
+		cout << it->second;
+		cout << "] }" << endl;
 	}
 }
 
@@ -182,14 +189,14 @@ int Server::runGetRequest(const HTTP::Request& request, HTTP::Response& response
 	(void)request;
 	response.setMajorVersion(request.getMajorVersion());
 	response.setMinorVersion(request.getMinorVersion());
-	response.setStatusCode(200);
+	response.setStatusCode("200");
 	response.setReasonPhrase("OK");
 
-	response.clearHeaderFieldVector();
-	response.appendHeaderFieldVector("Server: custom server");
-	response.appendHeaderFieldVector("Date: Mon, 25 Apr 2022 05:38:34 GMT");
-	response.appendHeaderFieldVector("Content-Type: text/html");
-	response.appendHeaderFieldVector("Last-Modified: Tue, 04 Dec 2018 14:52:24 GMT");
+	response.clearHeaderFieldMap();
+	response.appendHeaderFieldMap("Server", "custom server");
+	response.appendHeaderFieldMap("Date", "Mon, 25 Apr 2022 05:38:34 GMT");
+	response.appendHeaderFieldMap("Content-Type", "text/html");
+	response.appendHeaderFieldMap("Last-Modified", "Tue, 04 Dec 2018 14:52:24 GMT");
 
 	response.setBody("<!DOCFTYPE html><html></html>");
 

@@ -2,7 +2,7 @@
 #define MESSAGE_HPP_
 
 #include <iostream>
-#include <vector>
+#include <map>
 
 namespace HTTP {
 
@@ -30,7 +30,7 @@ private:
 	char _major_version;
 	char _minor_version;
 
-	std::vector<std::string> _header_field_vector;
+	std::map<std::string, std::string> _header_field_map;
 
 	std::string _body;
 
@@ -66,21 +66,22 @@ class Response {
 private:
 	char _major_version;
 	char _minor_version;
-	int _status_code;
+	char _status_code[4];
 	std::string _reason_phrase;
 
-	std::vector<std::string> _header_field_vector;
+	std::map<std::string, std::string> _header_field_map;
 
 	std::string _body;
 
 public:
+	Response();
 	// setter
 	void setMajorVersion(char new_value);
 	void setMinorVersion(char new_value);
-	void setStatusCode(int new_value);
+	void setStatusCode(const char* new_value);
 	void setReasonPhrase(const std::string& new_value);
-	void clearHeaderFieldVector();
-	void appendHeaderFieldVector(const std::string& new_value);
+	void clearHeaderFieldMap();
+	void appendHeaderFieldMap(const std::string& key, const std::string& value);
 	void setBody(const std::string& new_value);
 
 	// generate response message
