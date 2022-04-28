@@ -75,6 +75,7 @@ private:
 
 public:
 	Response();
+
 	// setter
 	void setMajorVersion(char new_value);
 	void setMinorVersion(char new_value);
@@ -101,16 +102,14 @@ public:
 //  	if (event_array[i].ident == fd_to_send)
 //  		send(fd_to_send, response_message, response_message.length());
 //  }
-class Server {
+class RequestProcessor: public Session {
 private:
 	int runGetRequest(const HTTP::Request& request, HTTP::Response& response);
 	int runPostRequest(const HTTP::Request& request, HTTP::Response& response);
 	int runDeleteRequest(const HTTP::Request& request, HTTP::Response& response);
-	// other members
 
 public:
 	int runRequest(const HTTP::Request& request, HTTP::Response& response);
-	// other members
 };
 
 #endif	// MESSAGE_HPP_

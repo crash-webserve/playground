@@ -111,6 +111,8 @@ std::string recieveRequest() {
 	ssize_t countOfReceivedBytes;
 	while (true) {
 		eventCount = kevent(kqueueFD, NULL, 0, keventArray, 32, NULL);
+		if (eventCount == 0)
+			continue;
 		countOfReceivedBytes = recv(keventArray[0].ident, msgBuffer, 1024, 0);
 		if (countOfReceivedBytes != 0) {
 			msgBuffer[countOfReceivedBytes] = '\0';
