@@ -225,7 +225,7 @@ int Worker::runGetRequest(const HTTP::Request& request, HTTP::Response& response
 	response.insertHeaderFieldMap("Content-Type", "text/html");
 	response.insertHeaderFieldMap("Last-Modified", "Tue, 04 Dec 2018 14:52:24 GMT");
 
-	response.setBody("<!DOCFTYPE html><html></html>");
+	response.setBody("<!DOCFTYPE html><html>hi!</html>");
 
 	return 0;
 }
