@@ -6,6 +6,8 @@
 
 namespace HTTP {
 
+typedef std::map<std::string, std::string> StringMap;
+
 // class to store data of HTTP request message.
 // Example:
 //	// example of data in request_string
@@ -30,7 +32,7 @@ private:
 	char _major_version;
 	char _minor_version;
 
-	std::map<std::string, std::string> _header_field_map;
+	StringMap _header_field_map;
 
 	std::string _body;
 
@@ -69,9 +71,14 @@ private:
 	char _status_code[4];
 	std::string _reason_phrase;
 
-	std::map<std::string, std::string> _header_field_map;
+	StringMap _header_field_map;
 
 	std::string _body;
+
+	static StringMap _status_reason_map;
+
+	void setStatusCode(const char* new_value);
+	void setReasonPhrase(const std::string& new_value);
 
 public:
 	Response();
@@ -79,11 +86,15 @@ public:
 	// setter
 	void setMajorVersion(char new_value);
 	void setMinorVersion(char new_value);
-	void setStatusCode(const char* new_value);
-	void setReasonPhrase(const std::string& new_value);
 	void clearHeaderFieldMap();
-	void appendHeaderFieldMap(const std::string& key, const std::string& value);
+	void insertHeaderFieldMap(const std::string& key, const std::string& value);
 	void setBody(const std::string& new_value);
+
+	void setStatus(const std::string& code);
+
+	// initialize this->_status_reason_map
+	// Call this function at the start of program
+	static void initStatusCodeMap(const char* file_name);
 
 	// generate response message
 	std::string convertToString() const;
@@ -102,7 +113,7 @@ public:
 //  	if (event_array[i].ident == fd_to_send)
 //  		send(fd_to_send, response_message, response_message.length());
 //  }
-class RequestProcessor: public Session {
+class Worker/*: public Session*/ {
 private:
 	int runGetRequest(const HTTP::Request& request, HTTP::Response& response);
 	int runPostRequest(const HTTP::Request& request, HTTP::Response& response);

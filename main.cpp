@@ -126,13 +126,15 @@ std::string recieveRequest() {
 }
 
 void testSocketResponse() {
-	Server server;
+	Worker worker;
 	HTTP::Response response;
+
+	HTTP::Response::initStatusCodeMap(NULL);
 
 // 	std::string request_message = recieveRequest();
 // 	HTTP::Request request(request_message);
 	HTTP::Request request("GET / HTTP/1.1");
-	if (server.runRequest(request, response) == -1) {
+	if (worker.runRequest(request, response) == -1) {
 		cout << "something wrong" << endl;
 		return;
 	}

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <cassert>
 #include <map>
@@ -8,7 +9,7 @@ using std::cin;
 using std::cout;
 using std::endl;
 
-static void describeStringMap(const std::map<std::string, std::string>& map);
+static void describeStringMap(const HTTP::StringMap& map);
 
 const int NORMAL = 0;
 const int ERROR = -1;
@@ -106,6 +107,8 @@ void HTTP::Request::describe() const {
 	cout << "_body: [" << this->_body << "]" << endl;
 }
 
+HTTP::StringMap HTTP::Response::_status_reason_map = HTTP::StringMap();
+
 HTTP::Response::Response() {
 	this->_status_code[3] = '\0';
 }
@@ -130,12 +133,37 @@ void HTTP::Response::clearHeaderFieldMap() {
 	this->_header_field_map.clear();
 }
 
-void HTTP::Response::appendHeaderFieldMap(const std::string& key, const std::string& value) {
+void HTTP::Response::insertHeaderFieldMap(const std::string& key, const std::string& value) {
 	this->_header_field_map[key] = value;
 }
 
 void HTTP::Response::setBody(const std::string& new_value) {
 	this->_body = new_value;
+}
+
+void HTTP::Response::setStatus(const std::string& code) {
+	this->setStatusCode(code.c_str());
+	this->setReasonPhrase(HTTP::Response::_status_reason_map[code].c_str());
+}
+
+void HTTP::Response::initStatusCodeMap(const char* file_name) {
+	std::string file_name_string;
+	if (file_name != NULL)
+		file_name_string = file_name;
+	else
+		file_name_string = "status_code.txt";
+
+	std::ifstream fin(file_name_string.c_str());
+	if (!fin.is_open())
+		return;
+
+	std::string code;
+	std::string reason;
+	while (fin >> code && fin.get() && getline(fin, reason)) {
+		HTTP::Response::_status_reason_map[code] = reason;
+	}
+
+	describeStringMap(HTTP::Response::_status_reason_map);
 }
 
 std::string HTTP::Response::convertToString() const {
@@ -150,7 +178,7 @@ std::string HTTP::Response::convertToString() const {
 	response_message += " ";
 	response_message += this->_reason_phrase;
 	response_message += "\r\n";
-	for (std::map<std::string, std::string>::const_iterator it = this->_header_field_map.begin(); it != this->_header_field_map.end(); ++it) {
+	for (HTTP::StringMap::const_iterator it = this->_header_field_map.begin(); it != this->_header_field_map.end(); ++it) {
 		response_message += it->first;
 		response_message += ": ";
 		response_message += it->second;
@@ -175,8 +203,8 @@ void HTTP::Response::describe() const {
 	cout << "_body: [" << this->_body << "]" << endl;
 }
 
-void describeStringMap(const std::map<std::string, std::string>& map) {
-	for (std::map<std::string, std::string>::const_iterator it = map.begin(); it != map.end(); ++it) {
+void describeStringMap(const HTTP::StringMap& map) {
+	for (HTTP::StringMap::const_iterator it = map.begin(); it != map.end(); ++it) {
 		cout << "header field: { key: [";
 		cout << it->first;
 		cout << "], value: [";
@@ -185,38 +213,37 @@ void describeStringMap(const std::map<std::string, std::string>& map) {
 	}
 }
 
-int Server::runGetRequest(const HTTP::Request& request, HTTP::Response& response) {
+int Worker::runGetRequest(const HTTP::Request& request, HTTP::Response& response) {
 	(void)request;
 	response.setMajorVersion(request.getMajorVersion());
 	response.setMinorVersion(request.getMinorVersion());
-	response.setStatusCode("200");
-	response.setReasonPhrase("OK");
+	response.setStatus("200");
 
 	response.clearHeaderFieldMap();
-	response.appendHeaderFieldMap("Server", "custom server");
-	response.appendHeaderFieldMap("Date", "Mon, 25 Apr 2022 05:38:34 GMT");
-	response.appendHeaderFieldMap("Content-Type", "text/html");
-	response.appendHeaderFieldMap("Last-Modified", "Tue, 04 Dec 2018 14:52:24 GMT");
+	response.insertHeaderFieldMap("Server", "custom server");
+	response.insertHeaderFieldMap("Date", "Mon, 25 Apr 2022 05:38:34 GMT");
+	response.insertHeaderFieldMap("Content-Type", "text/html");
+	response.insertHeaderFieldMap("Last-Modified", "Tue, 04 Dec 2018 14:52:24 GMT");
 
 	response.setBody("<!DOCFTYPE html><html></html>");
 
 	return 0;
 }
 
-int Server::runPostRequest(const HTTP::Request& request, HTTP::Response& response) {
+int Worker::runPostRequest(const HTTP::Request& request, HTTP::Response& response) {
 	(void)request;
 	(void)response;
 
 	return 0;
 }
 
-int Server::runDeleteRequest(const HTTP::Request& request, HTTP::Response& response) {
+int Worker::runDeleteRequest(const HTTP::Request& request, HTTP::Response& response) {
 	(void)request;
 	(void)response;
 
 	return 0;
 }
 
-int Server::runRequest(const HTTP::Request& request, HTTP::Response& response) {
+int Worker::runRequest(const HTTP::Request& request, HTTP::Response& response) {
 	return runGetRequest(request, response);
 }
