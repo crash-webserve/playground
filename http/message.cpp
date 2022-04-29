@@ -217,7 +217,7 @@ void describeStringMap(std::ostream& out, const HTTP::StringMap& map) {
 	}
 }
 
-int Worker::runGetRequest(const HTTP::Request& request, HTTP::Response& response) {
+int HTTP::Worker::runGetRequest(const HTTP::Request& request, HTTP::Response& response) {
 	response.setMajorVersion(request.getMajorVersion());
 	response.setMinorVersion(request.getMinorVersion());
 	response.setStatus("200");
@@ -237,20 +237,20 @@ int Worker::runGetRequest(const HTTP::Request& request, HTTP::Response& response
 	return 0;
 }
 
-int Worker::runPostRequest(const HTTP::Request& request, HTTP::Response& response) {
+int HTTP::Worker::runPostRequest(const HTTP::Request& request, HTTP::Response& response) {
 	(void)request;
 	(void)response;
 
 	return 0;
 }
 
-int Worker::runDeleteRequest(const HTTP::Request& request, HTTP::Response& response) {
+int HTTP::Worker::runDeleteRequest(const HTTP::Request& request, HTTP::Response& response) {
 	(void)request;
 	(void)response;
 
 	return 0;
 }
 
-int Worker::runRequest(const HTTP::Request& request, HTTP::Response& response) {
+int HTTP::Worker::runRequest(const HTTP::Request& request, HTTP::Response& response) {
 	return runGetRequest(request, response);
 }

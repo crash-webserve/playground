@@ -26,6 +26,14 @@ public:
 		METHOD_DELETE,
 	};
 
+	explicit Request(const std::string& string);
+
+	Method getMethod() const;
+	char getMajorVersion() const;
+	char getMinorVersion() const;
+
+	void describe(std::ostream& out) const;	// this is for debug usage
+
 private:
 	Method _method;
 	std::string _request_target;
@@ -36,14 +44,6 @@ private:
 
 	std::string _body;
 
-public:
-	explicit Request(const std::string& string);
-
-	Method getMethod() const;
-	char getMajorVersion() const;
-	char getMinorVersion() const;
-
-	void describe(std::ostream& out) const;	// this is for debug usage
 };
 
 // class to store data of HTTP response message.
@@ -65,21 +65,6 @@ public:
 //  //  ...
 //  //  </html>";
 class Response {
-private:
-	char _major_version;
-	char _minor_version;
-	char _status_code[4];
-	std::string _reason_phrase;
-
-	StringMap _header_field_map;
-
-	std::string _body;
-
-	static StringMap _status_reason_map;
-
-	void setStatusCode(const char* new_value);
-	void setReasonPhrase(const std::string& new_value);
-
 public:
 	Response();
 
@@ -100,9 +85,22 @@ public:
 	std::string convertToString() const;
 
 	void describe(std::ostream& out) const;	// this is for debug usage
-};
 
-};	// namespace HTTP
+private:
+	char _major_version;
+	char _minor_version;
+	char _status_code[4];
+	std::string _reason_phrase;
+
+	StringMap _header_field_map;
+
+	std::string _body;
+
+	static StringMap _status_reason_map;
+
+	void setStatusCode(const char* new_value);
+	void setReasonPhrase(const std::string& new_value);
+};
 
 // class for to interact with messages
 // Example:
@@ -114,13 +112,15 @@ public:
 //  		send(fd_to_send, response_message, response_message.length());
 //  }
 class Worker/*: public Session*/ {
+public:
+	int runRequest(const HTTP::Request& request, HTTP::Response& response);
+
 private:
 	int runGetRequest(const HTTP::Request& request, HTTP::Response& response);
 	int runPostRequest(const HTTP::Request& request, HTTP::Response& response);
 	int runDeleteRequest(const HTTP::Request& request, HTTP::Response& response);
-
-public:
-	int runRequest(const HTTP::Request& request, HTTP::Response& response);
 };
+
+};	// namespace HTTP
 
 #endif	// MESSAGE_HPP_
