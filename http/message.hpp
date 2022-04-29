@@ -16,14 +16,14 @@ typedef std::map<std::string, std::string> StringMap;
 //	//
 //	//  ";
 //	HTTP::Request request(request_string);
-//	if (request.getMethod() == HTTP::Request::GET)
+//	if (request.getMethod() == HTTP::Request::METHOD_GET)
 //		server.runMessage(request, response);
 class Request {
 public:
 	enum Method {
-		GET,
-		POST,
-		DELETE,
+		METHOD_GET,
+		METHOD_POST,
+		METHOD_DELETE,
 	};
 
 private:
@@ -43,7 +43,7 @@ public:
 	char getMajorVersion() const;
 	char getMinorVersion() const;
 
-	void describe() const;	// this is for debug usage
+	void describe(std::ostream& out) const;	// this is for debug usage
 };
 
 // class to store data of HTTP response message.
@@ -99,7 +99,7 @@ public:
 	// generate response message
 	std::string convertToString() const;
 
-	void describe() const;	// this is for debug usage
+	void describe(std::ostream& out) const;	// this is for debug usage
 };
 
 };	// namespace HTTP

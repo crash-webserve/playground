@@ -37,7 +37,7 @@ int main() {
 void testSimpleRequest() {
 	std::string request_message = "GET /index.html HTTP/1.1\n Host: localhost\n\n";
 	HTTP::Request request = HTTP::Request(request_message);
-	request.describe();
+	request.describe(cout);
 }
 
 void testMessage() {
@@ -64,7 +64,7 @@ void testMessage() {
 	// print request
 	HTTP::Request request = HTTP::Request(request_message);
 	cout << "< request describe >" << endl;
-	request.describe();
+	request.describe(cout);
 	cout << endl;
 
 	if (worker.runRequest(request, response) == -1) {
@@ -74,7 +74,7 @@ void testMessage() {
 
 	// print response
 	cout << "< response describe >" << endl;
-	response.describe();
+	response.describe(cout);
 	cout << endl;
 
 	// print response message in string

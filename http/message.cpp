@@ -9,18 +9,18 @@ using std::cin;
 using std::cout;
 using std::endl;
 
-static void describeStringMap(const HTTP::StringMap& map);
+static void describeStringMap(std::ostream& out, const HTTP::StringMap& map);
 
 const int NORMAL = 0;
 const int ERROR = -1;
 
 static void initMethod(HTTP::Request::Method& method, const std::string& token) {
 	if (token == "GET")
-		method = HTTP::Request::GET;
+		method = HTTP::Request::METHOD_GET;
 	else if (token == "POST")
-		method = HTTP::Request::POST;
+		method = HTTP::Request::METHOD_POST;
 	else if (token == "DELETE")
-		method = HTTP::Request::DELETE;
+		method = HTTP::Request::METHOD_DELETE;
 	else
 		assert(false);
 }
@@ -94,17 +94,18 @@ char HTTP::Request::getMinorVersion() const {
 	return this->_minor_version;
 }
 
-void HTTP::Request::describe() const {
-	cout << "_method: [" << this->_method << "]" << endl;
-	cout << "_request_target: [" << this->_request_target << "]" << endl;
-	cout << "_major_version: [" << this->_major_version << "]" << endl;
-	cout << "_minor_version: [" << this->_minor_version << "]" << endl;
-	cout << endl;
+void HTTP::Request::describe(std::ostream& out) const {
+	out << "_method: [" << this->_method << "]" << endl;
+	out << "_request_target: [" << this->_request_target << "]" << endl;
+	out << "_major_version: [" << this->_major_version << "]" << endl;
+	out << "_minor_version: [" << this->_minor_version << "]" << endl;
+	out << endl;
 
-	describeStringMap(this->_header_field_map);
-	cout << endl;
+	out << "_header_field_map:" << endl;
+	describeStringMap(out, this->_header_field_map);
+	out << endl;
 
-	cout << "_body: [" << this->_body << "]" << endl;
+	out << "_body: [" << this->_body << "]" << endl;
 }
 
 HTTP::StringMap HTTP::Response::_status_reason_map = HTTP::StringMap();
@@ -162,8 +163,6 @@ void HTTP::Response::initStatusCodeMap(const char* file_name) {
 	while (fin >> code && fin.get() && getline(fin, reason)) {
 		HTTP::Response::_status_reason_map[code] = reason;
 	}
-
-	describeStringMap(HTTP::Response::_status_reason_map);
 }
 
 std::string HTTP::Response::convertToString() const {
@@ -190,31 +189,35 @@ std::string HTTP::Response::convertToString() const {
 	return response_message;
 }
 
-void HTTP::Response::describe() const {
-	cout << "_major_version: [" << this->_major_version << "]" << endl;
-	cout << "_minor_version: [" << this->_minor_version << "]" << endl;
-	cout << "_status_code: [" << this->_status_code << "]" << endl;
-	cout << "_reason_phrase: [" << this->_reason_phrase << "]" << endl;
-	cout << endl;
+void HTTP::Response::describe(std::ostream& out) const {
+	out << "_status_reason_map:" << endl;
+	describeStringMap(out, HTTP::Response::_status_reason_map);
+	out << endl;
 
-	describeStringMap(this->_header_field_map);
-	cout << endl;
+	out << "_major_version: [" << this->_major_version << "]" << endl;
+	out << "_minor_version: [" << this->_minor_version << "]" << endl;
+	out << "_status_code: [" << this->_status_code << "]" << endl;
+	out << "_reason_phrase: [" << this->_reason_phrase << "]" << endl;
+	out << endl;
 
-	cout << "_body: [" << this->_body << "]" << endl;
+	out << "_header_field_map:" << endl;
+	describeStringMap(out, this->_header_field_map);
+	out << endl;
+
+	out << "_body: [" << this->_body << "]" << endl;
 }
 
-void describeStringMap(const HTTP::StringMap& map) {
+void describeStringMap(std::ostream& out, const HTTP::StringMap& map) {
 	for (HTTP::StringMap::const_iterator it = map.begin(); it != map.end(); ++it) {
-		cout << "header field: { key: [";
-		cout << it->first;
-		cout << "], value: [";
-		cout << it->second;
-		cout << "] }" << endl;
+		out << "pair: { key: [";
+		out << it->first;
+		out << "], value: [";
+		out << it->second;
+		out << "] }" << endl;
 	}
 }
 
 int Worker::runGetRequest(const HTTP::Request& request, HTTP::Response& response) {
-	(void)request;
 	response.setMajorVersion(request.getMajorVersion());
 	response.setMinorVersion(request.getMinorVersion());
 	response.setStatus("200");
@@ -222,10 +225,14 @@ int Worker::runGetRequest(const HTTP::Request& request, HTTP::Response& response
 	response.clearHeaderFieldMap();
 	response.insertHeaderFieldMap("Server", "custom server");
 	response.insertHeaderFieldMap("Date", "Mon, 25 Apr 2022 05:38:34 GMT");
-	response.insertHeaderFieldMap("Content-Type", "text/html");
+	response.insertHeaderFieldMap("Content-Type", "text/plain");
 	response.insertHeaderFieldMap("Last-Modified", "Tue, 04 Dec 2018 14:52:24 GMT");
 
-	response.setBody("<!DOCFTYPE html><html>hi!</html>");
+	std::stringstream ss;
+
+	request.describe(ss);
+
+	response.setBody(ss.str());
 
 	return 0;
 }
