@@ -63,13 +63,12 @@ void test() {
 					else
 						deleteEventClient(event.ident, kqueue_fd);
 			}
-			if (event.filter == EVFILT_WRITE)
+			else if (event.filter == EVFILT_WRITE)
 				if (response_message_should_write[event.ident]) {
 					const std::string response_message = response_message_array[event.ident];
 					send(event.ident, response_message.c_str(), response_message.length(), 0);
 					response_message_should_write[event.ident] = false;
 				}
-
 		}
 	}
 }
@@ -127,9 +126,9 @@ void modifyEventClient(int sock, int kqueue_fd, uint16_t flags) {
 	modifyEvent(sock, kqueue_fd, EVFILT_WRITE, flags);
 }
 
-void modifyEvent(int client_socket, int kqueue_fd, int16_t filter, uint16_t flags) {
+void modifyEvent(int sock, int kqueue_fd, int16_t filter, uint16_t flags) {
 	struct kevent event;
-	EV_SET(&event, client_socket, filter, flags, 0, 0, NULL);
+	EV_SET(&event, sock, filter, flags, 0, 0, NULL);
 	kevent(kqueue_fd, &event, 1, NULL, 0, NULL);
 }
 // event
