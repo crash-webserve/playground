@@ -2,6 +2,7 @@
 #include <iomanip>
 #include "message.hpp"
 
+using std::cin;
 using std::cout;
 using std::endl;
 
@@ -11,10 +12,11 @@ using std::endl;
 #include <sys/time.h>	// struct timespec
 #include <fcntl.h>	// fcntl()
 #include <sys/event.h>	// struct kevent, kevent()
+#include <unistd.h>
 
-void test();
+void test(int portNumber);
 int socketServer();
-int bindServer(int server_socket);
+int bindServer(int server_socket, int portNumber);
 void listenServer(int server_socket);
 void acceptServer(int server_socket, int kqueue_fd);
 void addEventClient(int sock, int kqueue_fd);
@@ -25,19 +27,24 @@ ssize_t readClient(int client_socket, char* msg_buf, std::size_t buf_size);
 void runRequest(const std::string request_message, std::string& respons_message, bool& should_write);
 void describeStringAsHex(const std::string& string);
 
-const int DEFAULT_PORT = 80;
 const std::size_t DEFAULT_EVENT_ARRAY_SIZE = 32;
 const std::size_t BUF_SIZE = 1024;
 
-int main() {
-	test();
+int main(int argc, char** argv) {
+	if (argc != 2) {
+		cout << "usage: " << argv[0] << " <port number>" << endl;
+		return 0;
+	}
+
+	test(atoi(argv[1]));
 
 	return 0;
 }
 
-void test() {
+void test(int portNumber) {
 	int server_socket = socketServer();
-	if (bindServer(server_socket) == -1)
+	cout << "serverSocket: " << server_socket << endl;
+	if (bindServer(server_socket, portNumber) == -1)
 		return;
 	listenServer(server_socket);
 
@@ -50,10 +57,15 @@ void test() {
 	bool response_message_should_write[DEFAULT_EVENT_ARRAY_SIZE] = {};
 	struct timespec timeout = { 0, 0 };
 	char msg_buf[BUF_SIZE];
-	while (true) {
+	fcntl(0, F_SETFL, O_NONBLOCK);
+	while (cin.get() != 'q') {
+		cin.clear();
 		event_count = kevent(kqueue_fd, NULL, 0, event_array, DEFAULT_EVENT_ARRAY_SIZE, &timeout);
+		if (event_count != 0)
+			cout << endl << "eventCount: " << event_count << endl;
 		for (int i = 0; i < event_count; ++i) {
 			const struct kevent& event = event_array[i];
+			cout << "event.ident: " << event.ident << ", event.filter: " << event.filter << endl;
 			if (event.filter == EVFILT_READ) {
 				if (static_cast<int>(event.ident) == server_socket)
 					acceptServer(server_socket, kqueue_fd);
@@ -66,11 +78,16 @@ void test() {
 			else if (event.filter == EVFILT_WRITE)
 				if (response_message_should_write[event.ident]) {
 					const std::string response_message = response_message_array[event.ident];
-					send(event.ident, response_message.c_str(), response_message.length(), 0);
+					const size_t sendResult = send(event.ident, response_message.c_str(), response_message.length(), 0);
+					cout << "responseMessage.length(): " << response_message.length() << endl;
+					cout << "sendResult: " << sendResult << endl;
 					response_message_should_write[event.ident] = false;
 				}
 		}
+		usleep(100000);
 	}
+
+	close(server_socket);
 }
 
 int socketServer() {
@@ -81,14 +98,14 @@ int socketServer() {
 	return server_socket;
 }
 
-int bindServer(int server_socket) {
+int bindServer(int server_socket, int portNumber) {
 	struct sockaddr_in server_socket_address;
 	const size_t size_of_server_socket_address = sizeof(server_socket_address);
 
 	memset(&server_socket_address, 0, size_of_server_socket_address);
 	server_socket_address.sin_family = AF_INET;
 	server_socket_address.sin_addr.s_addr = htonl(INADDR_ANY);
-	server_socket_address.sin_port = htons(DEFAULT_PORT);
+	server_socket_address.sin_port = htons(portNumber);
 
 	if (bind(server_socket, (struct sockaddr*) &server_socket_address, size_of_server_socket_address) == -1) {
 		cout << "fail bind()" << endl;
@@ -109,6 +126,7 @@ void acceptServer(int server_socket, int kqueue_fd) {
 	struct sockaddr_in client_socket_address;
 	socklen_t client_socket_address_size = sizeof(client_socket_address);
 	int client_socket = accept(server_socket, (struct sockaddr*)&client_socket_address, &client_socket_address_size);
+	cout << "clientSocket: " << client_socket << endl;
 	addEventClient(client_socket, kqueue_fd);
 }
 
@@ -119,6 +137,7 @@ void addEventClient(int sock, int kqueue_fd) {
 
 void deleteEventClient(int sock, int kqueue_fd) {
 	modifyEventClient(sock, kqueue_fd, EV_DELETE);
+	close(sock);
 }
 
 void modifyEventClient(int sock, int kqueue_fd, uint16_t flags) {
@@ -146,22 +165,22 @@ void runRequest(const std::string request_message, std::string& response_message
 	HTTP::Response::initStatusCodeMap(NULL);
 
 	// print request message in string
-	cout << "< request_message >" << endl;
-	cout << "[" << request_message << "]" << endl;
-	cout << endl;
+// 	cout << "< request_message >" << endl;
+// 	cout << "[" << request_message << "]" << endl;
+// 	cout << endl;
 
 	// print request message in hex
-	cout << "< request_message in hex >" << endl;
-	cout << "[";
-	describeStringAsHex(request_message);
-	cout << "]" << endl;
-	cout << endl;
+// 	cout << "< request_message in hex >" << endl;
+// 	cout << "[";
+// 	describeStringAsHex(request_message);
+// 	cout << "]" << endl;
+// 	cout << endl;
 
 	// print request
 	HTTP::Request request = HTTP::Request(request_message);
-	cout << "< request describe >" << endl;
-	request.describe(cout);
-	cout << endl;
+// 	cout << "< request describe >" << endl;
+// 	request.describe(cout);
+// 	cout << endl;
 
 	if (worker.runRequest(request, response) == -1) {
 		cout << "something wrong" << endl;
@@ -169,14 +188,14 @@ void runRequest(const std::string request_message, std::string& response_message
 	}
 
 	// print response
-	cout << "< response describe >" << endl;
-	response.describe(cout);
-	cout << endl;
+// 	cout << "< response describe >" << endl;
+// 	response.describe(cout);
+// 	cout << endl;
 
 	// print response message in string
 	response_message = response.convertToString();
-	cout << "< response message >" << endl;
-	cout << response_message << endl;
+// 	cout << "< response message >" << endl;
+// 	cout << response_message << endl;
 
 	should_write = true;
 }

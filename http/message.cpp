@@ -204,7 +204,7 @@ void HTTP::Response::describe(std::ostream& out) const {
 	describeStringMap(out, this->_header_field_map);
 	out << endl;
 
-	out << "_body: [" << this->_body << "]" << endl;
+// 	out << "_body: [" << this->_body << "]" << endl;
 }
 
 void describeStringMap(std::ostream& out, const HTTP::StringMap& map) {
@@ -225,14 +225,17 @@ int HTTP::Worker::runGetRequest(const HTTP::Request& request, HTTP::Response& re
 	response.clearHeaderFieldMap();
 	response.insertHeaderFieldMap("Server", "custom server");
 	response.insertHeaderFieldMap("Date", "Mon, 25 Apr 2022 05:38:34 GMT");
-	response.insertHeaderFieldMap("Content-Type", "text/plain");
+	response.insertHeaderFieldMap("Content-Type", "image/png");
 	response.insertHeaderFieldMap("Last-Modified", "Tue, 04 Dec 2018 14:52:24 GMT");
 
-	std::stringstream ss;
+// 	std::stringstream ss;
+// 
+// 	request.describe(ss);
+// 
+// 	response.setBody(ss.str());
 
-	request.describe(ss);
-
-	response.setBody(ss.str());
+	std::string str = std::string(0x1 << 23, 'a');
+	response.setBody(str);
 
 	return 0;
 }
