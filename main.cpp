@@ -3,7 +3,7 @@
 #include "message.hpp"
 
 using std::cin;
-using std::cout;
+using std::cerr;
 using std::endl;
 
 #include <arpa/inet.h>	// inet_addr()
@@ -26,13 +26,15 @@ void modifyEvent(int client_socket, int kqueue_fd, int16_t filter, uint16_t flag
 ssize_t readClient(int client_socket, char* msg_buf, std::size_t buf_size);
 void runRequest(const std::string request_message, std::string& respons_message, bool& should_write);
 void describeStringAsHex(const std::string& string);
+void describeSock(int sock);
+void describeSockOpt(int sock, int optionName);
 
 const std::size_t DEFAULT_EVENT_ARRAY_SIZE = 32;
 const std::size_t BUF_SIZE = 1024;
 
 int main(int argc, char** argv) {
 	if (argc != 2) {
-		cout << "usage: " << argv[0] << " <port number>" << endl;
+		cerr << "usage: " << argv[0] << " <port number>" << endl;
 		return 0;
 	}
 
@@ -43,7 +45,7 @@ int main(int argc, char** argv) {
 
 void test(int portNumber) {
 	int server_socket = socketServer();
-	cout << "serverSocket: " << server_socket << endl;
+	cerr << "serverSocket: " << server_socket << endl;
 	if (bindServer(server_socket, portNumber) == -1)
 		return;
 	listenServer(server_socket);
@@ -62,26 +64,32 @@ void test(int portNumber) {
 		cin.clear();
 		event_count = kevent(kqueue_fd, NULL, 0, event_array, DEFAULT_EVENT_ARRAY_SIZE, &timeout);
 		if (event_count != 0)
-			cout << endl << "eventCount: " << event_count << endl;
+			cerr << endl << "eventCount: " << event_count << endl;
 		for (int i = 0; i < event_count; ++i) {
 			const struct kevent& event = event_array[i];
-			cout << "event.ident: " << event.ident << ", event.filter: " << event.filter << endl;
+			const int fd = event.ident;
+			describeSock(fd);
+			cerr << "fd: " << fd << ", event.filter: " << event.filter << endl;
 			if (event.filter == EVFILT_READ) {
-				if (static_cast<int>(event.ident) == server_socket)
+				if (static_cast<int>(fd) == server_socket)
 					acceptServer(server_socket, kqueue_fd);
 				else
-					if (readClient(event.ident, msg_buf, BUF_SIZE) != 0)
-						runRequest(msg_buf, response_message_array[event.ident], response_message_should_write[event.ident]);
-					else
-						deleteEventClient(event.ident, kqueue_fd);
+					if (readClient(fd, msg_buf, BUF_SIZE) != 0)
+						runRequest(msg_buf, response_message_array[fd], response_message_should_write[fd]);
+					else {
+						cerr << "close " << fd << endl;
+						deleteEventClient(fd, kqueue_fd);
+					}
 			}
 			else if (event.filter == EVFILT_WRITE)
-				if (response_message_should_write[event.ident]) {
-					const std::string response_message = response_message_array[event.ident];
-					const size_t sendResult = send(event.ident, response_message.c_str(), response_message.length(), 0);
-					cout << "responseMessage.length(): " << response_message.length() << endl;
-					cout << "sendResult: " << sendResult << endl;
-					response_message_should_write[event.ident] = false;
+				if (response_message_should_write[fd]) {
+					const std::string response_message = response_message_array[fd];
+					const size_t sendResult = send(fd, response_message.c_str(), response_message.length(), 0);
+					describeSock(fd);
+					cerr << "errno: " << errno << endl;
+					cerr << "responseMessage.length(): " << response_message.length() << endl;
+					cerr << "sendResult: " << sendResult << endl;
+					response_message_should_write[fd] = false;
 				}
 		}
 		usleep(100000);
@@ -108,12 +116,12 @@ int bindServer(int server_socket, int portNumber) {
 	server_socket_address.sin_port = htons(portNumber);
 
 	if (bind(server_socket, (struct sockaddr*) &server_socket_address, size_of_server_socket_address) == -1) {
-		cout << "fail bind()" << endl;
+		cerr << "fail bind()" << endl;
 
 		return -1;
 	}
 
-	cout << "success bind()" << endl;
+	cerr << "success bind()" << endl;
 
 	return 0;
 }
@@ -126,7 +134,7 @@ void acceptServer(int server_socket, int kqueue_fd) {
 	struct sockaddr_in client_socket_address;
 	socklen_t client_socket_address_size = sizeof(client_socket_address);
 	int client_socket = accept(server_socket, (struct sockaddr*)&client_socket_address, &client_socket_address_size);
-	cout << "clientSocket: " << client_socket << endl;
+	cerr << "clientSocket: " << client_socket << endl;
 	addEventClient(client_socket, kqueue_fd);
 }
 
@@ -165,54 +173,68 @@ void runRequest(const std::string request_message, std::string& response_message
 	HTTP::Response::initStatusCodeMap(NULL);
 
 	// print request message in string
-// 	cout << "< request_message >" << endl;
-// 	cout << "[" << request_message << "]" << endl;
-// 	cout << endl;
+// 	cerr << "< request_message >" << endl;
+// 	cerr << "[" << request_message << "]" << endl;
+// 	cerr << endl;
 
 	// print request message in hex
-// 	cout << "< request_message in hex >" << endl;
-// 	cout << "[";
+// 	cerr << "< request_message in hex >" << endl;
+// 	cerr << "[";
 // 	describeStringAsHex(request_message);
-// 	cout << "]" << endl;
-// 	cout << endl;
+// 	cerr << "]" << endl;
+// 	cerr << endl;
 
 	// print request
 	HTTP::Request request = HTTP::Request(request_message);
-// 	cout << "< request describe >" << endl;
-// 	request.describe(cout);
-// 	cout << endl;
+// 	cerr << "< request describe >" << endl;
+// 	request.describe(cerr);
+// 	cerr << endl;
 
 	if (worker.runRequest(request, response) == -1) {
-		cout << "something wrong" << endl;
+		cerr << "something wrong" << endl;
 		return;
 	}
 
 	// print response
-// 	cout << "< response describe >" << endl;
-// 	response.describe(cout);
-// 	cout << endl;
+// 	cerr << "< response describe >" << endl;
+// 	response.describe(cerr);
+// 	cerr << endl;
 
 	// print response message in string
 	response_message = response.convertToString();
-// 	cout << "< response message >" << endl;
-// 	cout << response_message << endl;
+// 	cerr << "< response message >" << endl;
+// 	cerr << response_message << endl;
 
 	should_write = true;
 }
 
 void describeStringAsHex(const std::string& string) {
-	cout << std::hex << std::setfill('0');
+	cerr << std::hex << std::setfill('0');
 	int index = 0;
 	for (std::string::const_iterator it = string.begin(); it != string.end(); ++it) {
 		if (index % 2 == 0)
-			cout << ' ';
+			cerr << ' ';
 		if (index % 8 == 0)
-			cout << ' ';
+			cerr << ' ';
 		if (index % 16 == 0)
-			cout << '\n';
+			cerr << '\n';
 
-		cout << std::setw(2) << (int)*it;
+		cerr << std::setw(2) << (int)*it;
 		++index;
 	}
-	cout << std::dec;
+	cerr << std::dec;
+}
+
+void describeSock(int sock) {
+	describeSockOpt(sock, SO_NWRITE);
+	describeSockOpt(sock, SO_SNDBUF);
+// 	describeSockOpt(sock, SO_ERROR);
+}
+
+void describeSockOpt(int sock, int optionName) {
+	int value = -1;
+	socklen_t size = sizeof(value);
+
+	getsockopt(sock, SOL_SOCKET, optionName, &value, &size);
+	cerr << "optionName: " << optionName << ", value: " << value << ", size: " << size << endl;
 }
