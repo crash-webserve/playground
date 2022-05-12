@@ -61,10 +61,10 @@ private:
 
 
 
+// Config
 struct Config {
 public:
     Config(const char* configFilePath, char** invalidArgument);
-
 
 public:
     std::string ipAddress;
@@ -73,6 +73,7 @@ public:
 
 
 
+// Sock
 class Sock {
 public:
     enum Type {
@@ -92,11 +93,13 @@ public:
     bool isTypeServer() const { return this->type == Sock::SERVER; };
     bool isTypeClient() const { return this->type == Sock::CLIENT; };
 
-    void accept(int kqueueFD, Sock& sock) const;
+    void accept(Sock& sock) const;
     ssize_t readRequest();
 
     bool isReadyToService() { return this->request.isReadyToService(); };
     void parseRequest() { this->request.parse(); };
+
+    void describe() const;
 
 private:
     Sock::Type type;
@@ -110,6 +113,7 @@ private:
 
 
 
+// SockMap
 class SockMap {
 public:
     typedef std::map<int, Sock*> Type;
@@ -120,21 +124,26 @@ public:
     void insert(const int& fd, Sock* sock);
     Type::size_type erase(const int& fd);
 
+    void describe() const;
+
 private:
     Type map;
 };
 
 
 
+// Server
 class Server {
 public:
     Server(const char* ipAddress, in_port_t portNumber, const std::string& serverName)
         : portNumber(portNumber), serverName(serverName) { inet_pton(AF_INET, ipAddress, &this->sinAddress); };
 
     in_port_t getPortNumber() const { return this->portNumber; };
-    void setSock(Sock* sock);
+    void setSock(Sock* sock) { this->sock = sock; };
 
     void provideService(Sock& sock, int kqueue) const;
+
+    void describe() const;
 
 private:
     struct in_addr sinAddress;
@@ -148,18 +157,20 @@ private:
 
 
 
+// ServerVector
 typedef std::vector<Server*> ServerVectorType;
 class ServerVector: public ServerVectorType {
 public:
     ~ServerVector();
+
+    void describe() const;
 };
 
 
 
+// ServerManager
 class ServerManager {
 public:
-    typedef std::map<std::string, std::string> StatusCodeMapType;
-
     ServerManager(Config& config);
 
     void eventLoop();
@@ -171,7 +182,7 @@ private:
 
     SockMap sockMap;
 
-    StatusCodeMapType statusCodeMap;
+    StringMap  statusCodeMap;
 
     // in initializer
     void setUpServer(Config& config);
@@ -208,20 +219,16 @@ private:
 //  //  </html>";
 class Response {
 public:
-    Response();
+    Response() { this->_status_code[3] = '\0'; };
 
     // setter
-    void setMajorVersion(char new_value);
-    void setMinorVersion(char new_value);
-    void clearHeaderFieldMap();
-    void insertHeaderFieldMap(const std::string& key, const std::string& value);
-    void setBody(const std::string& new_value);
-
-    void setStatus(const std::string& code);
-
-    // initialize this->_status_reason_map
-    // Call this function at the start of program
-    static void initStatusCodeMap(const char* file_name);
+    void setMajorVersion(char new_value) { this->_major_version = new_value; };
+    void setMinorVersion(char new_value) { this->_minor_version = new_value; };
+    void clearHeaderFieldMap() { this->_headerFieldMap.clear(); };
+    void insertHeaderFieldMap(const std::string& key, const std::string& value) { this->_headerFieldMap[key] = value; };
+    void setStatusCode(const char* new_value) { memcpy(this->_status_code, new_value, 3); };
+    void setReasonPhrase(const std::string& new_value) { this->_reason_phrase = new_value; };
+    void setBody(const std::string& new_value) { this->_body = new_value; };
 
     // generate response message
     std::string convertToString() const;
@@ -238,10 +245,6 @@ private:
 
     std::string _body;
 
-    static StringMap _status_reason_map;
-
-    void setStatusCode(const char* new_value);
-    void setReasonPhrase(const std::string& new_value);
 };
 
 #endif  // CLASS_HPP_

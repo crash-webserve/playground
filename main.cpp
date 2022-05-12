@@ -3,7 +3,7 @@
 #include "class.hpp"
 
 using std::cin;
-using std::cerr;
+using std::cout;
 using std::endl;
 
 #include <arpa/inet.h>  // inet_addr()
@@ -28,7 +28,7 @@ void describeSockOpt(int sock, int optionName);
 
 int main(int argc, char** argv) {
     if (argc != 2) {
-        cerr << "usage: " << argv[0] << " <port number>" << endl;
+        cout << "usage: " << argv[0] << " <port number>" << endl;
         return 0;
     }
 
@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
 
 
 void test(char** argv) {
+    cout << std::hex << std::showbase;
     Config config = Config(NULL, argv);
 
     ServerManager serverManager(config);
@@ -49,20 +50,20 @@ void test(char** argv) {
 
 
 void describeStringAsHex(const std::string& string) {
-    cerr << std::hex << std::setfill('0');
+    cout << std::hex << std::setfill('0');
     int index = 0;
     for (std::string::const_iterator it = string.begin(); it != string.end(); ++it) {
         if (index % 2 == 0)
-            cerr << ' ';
+            cout << ' ';
         if (index % 8 == 0)
-            cerr << ' ';
+            cout << ' ';
         if (index % 16 == 0)
-            cerr << '\n';
+            cout << '\n';
 
-        cerr << std::setw(2) << (int)*it;
+        cout << std::setw(2) << (int)*it;
         ++index;
     }
-    cerr << std::dec;
+    cout << std::dec;
 }
 
 void describeSock(int sock) {
@@ -75,5 +76,5 @@ void describeSockOpt(int sock, int optionName) {
     socklen_t size = sizeof(value);
 
     getsockopt(sock, SOL_SOCKET, optionName, &value, &size);
-    cerr << "optionName: " << optionName << ", value: " << value << ", size: " << size << endl;
+    cout << "optionName: " << optionName << ", value: " << value << ", size: " << size << endl;
 }
