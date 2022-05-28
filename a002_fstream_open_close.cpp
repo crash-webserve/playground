@@ -1,24 +1,12 @@
 #include <iostream>
+#include <sstream>
 #include <fstream>
+#include <map>
 #include <cstdio>
-#include <dirent.h>
-#include <unistd.h>
 
 using std::cin;
 using std::cout;
 using std::endl;
-
-
-static void dirent_describe(const struct dirent& dirent) {
-	cout << "dirent.d_ino: " << dirent.d_ino << ", size: " << sizeof(dirent.d_ino) << endl;
-	cout << "dirent.d_reclen: " << dirent.d_reclen << ", size: " << sizeof(dirent.d_reclen) << endl;
-	cout << "dirent.d_type: " << (int)(unsigned char)dirent.d_type << ", size: " << sizeof(dirent.d_type) << endl;
-	cout << "dirent.d_namlen: " << dirent.d_namlen << ", size: " << sizeof(dirent.d_namlen) << endl;
-    std::string name = std::string(dirent.d_name, dirent.d_name + dirent.d_namlen);
-//  cout << "dirent.d_name: " << dirent.d_name[__DARWIN_MAXNAMLEN + 1] << endl;
-    cout << "dirent.d_name: " << name << endl;
-    cout << "__DARWIN_MAXNAMLEN: " << __DARWIN_MAXNAMLEN << endl;
-}
 
 static void lmi_getline(std::istream& istream, std::string& line);
 
@@ -30,11 +18,8 @@ struct Pair {
 
 class Program {
 private:
-    std::string dirPath;
     std::string inputPath;
     std::string outputPath;
-
-    DIR* dir;
     std::ifstream input;
     std::ofstream output;
 
@@ -43,56 +28,37 @@ private:
 
     static void describeMethodCommand(void);
 
-    // describe
     void* describe(void);
-    void* describeDIR(void);
-    void* describedirent(void);
     void* describeInputOpen(void);
     void* describeOutputOpen(void);
-
-    // isOpen
     bool isInputOpen(void);
     bool isOutputOpen(void);
-
-    // open
-    void* openDIR(void);
     void* openInput(void);
     void* openOutput(void);
-
-    // close
     void* close(void);
     void* closeInput(void);
     void* closeOutput(void);
-
-    // unlink
-    void* unlink(void);
-
-    // manipulate file
-    void* read(void);
-    void* write(void);
-
-    // describe
+    void* remove(void);
+    void* readLine(void);
+    void* writeLine(void);
     void* custom(void);
 
-    // describe
     static const MethodPair methodDictionary[];
 
 public:
-    Program(): dir(NULL) { };
     void mainLoop(void);
 };
 
 const Program::MethodPair Program::methodDictionary[] = {
     { "describe", &Program::describe },
-    { "describe dirent", &Program::describedirent },
     { "open input", &Program::openInput },
     { "open output", &Program::openOutput },
     { "close", &Program::close },
     { "close input", &Program::closeInput },
     { "close output", &Program::closeOutput },
-    { "unlink", &Program::unlink },
-    { "read", &Program::read },
-    { "write", &Program::write },
+    { "remove", &Program::remove },
+    { "read line", &Program::readLine },
+    { "write line", &Program::writeLine },
     { "custom", &Program::custom },
 };
 
@@ -100,11 +66,8 @@ const Program::MethodPair Program::methodDictionary[] = {
 
 // MARK: - method
 void* Program::describe(void) {
-    cout << "dir path: " << this->dirPath << endl;
     cout << "input path: " << this->inputPath << endl;
     cout << "output path: " << this->outputPath << endl;
-
-    this->describeDIR();
     this->describeInputOpen();
     this->describeOutputOpen();
 
@@ -129,55 +92,12 @@ void* Program::describeOutputOpen(void) {
     return NULL;
 }
 
-void* Program::describeDIR(void) {
-    if (this->dir != NULL)
-        cout << "DIR*: " << this->dir << endl;
-    else
-        cout << "dir is NULL" << endl;
-
-    return NULL;
-}
-
-void* Program::describedirent(void) {
-    this->openDIR();
-
-    while (true) {
-        const struct dirent* entry = readdir(this->dir);
-        if (entry == NULL)
-            break;
-        dirent_describe(*entry);
-    }
-
-    closedir(this->dir);
-    this->dir = NULL;
-    this->dirPath.clear();
-
-    return NULL;
-}
-
 bool Program::isInputOpen(void) {
     return this->input.is_open();
 }
 
 bool Program::isOutputOpen(void) {
     return this->output.is_open();
-}
-
-void* Program::openDIR(void) {
-    if (this->dir != NULL)
-        throw "dir is already open";
-
-    cout << "enter new dir path: ";
-    lmi_getline(cin, this->dirPath);
-    this->dir = opendir(this->dirPath.c_str());
-    if (this->dir != NULL)
-        cout << "succeeded opendir()" << endl;
-    else {
-        this->dirPath.clear();
-        throw "failed opendir()";
-    }
-
-    return NULL;
 }
 
 void* Program::openInput(void) {
@@ -192,8 +112,8 @@ void* Program::openInput(void) {
     if (this->input.is_open())
         cout << "succeeded opening: " << this->inputPath << endl;
     else {
-        this->inputPath.clear();
         cout << "failed opening: " << this->inputPath << endl;
+        this->inputPath.clear();
     }
 
     return NULL;
@@ -211,8 +131,8 @@ void* Program::openOutput(void) {
     if (this->output.is_open())
         cout << "succeeded opening: " << this->outputPath << endl;
     else {
-        this->outputPath.clear();
         cout << "failed opening: " << this->outputPath << endl;
+        this->outputPath.clear();
     }
 
     return NULL;
@@ -249,13 +169,13 @@ void* Program::closeOutput(void) {
     return NULL;
 }
 
-void* Program::unlink(void) {
-    cout << "enter file path to unlink: ";
+void* Program::remove(void) {
+    cout << "enter file path to remove: ";
 
     std::string path;
     lmi_getline(cin, path);
-    if (::unlink(path.c_str()) == 0)
-        cout << "unlinked " << path << endl;
+    if (::remove(path.c_str()) == 0)
+        cout << "removed " << path << endl;
     else
         throw "no that path";
 
@@ -279,7 +199,7 @@ void* Program::custom(void) {
     return NULL;
 }
 
-void* Program::read(void) {
+void* Program::readLine(void) {
     if (!this->isInputOpen())
         throw "no file to read";
 
@@ -290,7 +210,7 @@ void* Program::read(void) {
     return NULL;
 }
 
-void* Program::write(void) {
+void* Program:: writeLine(void) {
     if (!this->isOutputOpen())
         throw "no file to write";
 
