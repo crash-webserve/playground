@@ -3,6 +3,7 @@
 #include <fstream>
 #include <map>
 #include <cstdio>
+#include <unistd.h>
 
 using std::cin;
 using std::cout;
@@ -18,13 +19,13 @@ struct Pair {
 
 class Program {
 private:
+    typedef void* (Program::*Method)(void);
+    typedef Pair<const char*, Method> MethodPair;
+
     std::string inputPath;
     std::string outputPath;
     std::ifstream input;
     std::ofstream output;
-
-    typedef void* (Program::*Method)(void);
-    typedef Pair<const char*, Method> MethodPair;
 
     static void describeMethodCommand(void);
 
@@ -39,8 +40,10 @@ private:
     void* closeInput(void);
     void* closeOutput(void);
     void* remove(void);
+    void* unlink(void);
     void* readLine(void);
     void* writeLine(void);
+    void* clear(void);
     void* custom(void);
 
     static const MethodPair methodDictionary[];
@@ -57,8 +60,10 @@ const Program::MethodPair Program::methodDictionary[] = {
     { "close input", &Program::closeInput },
     { "close output", &Program::closeOutput },
     { "remove", &Program::remove },
+    { "unlink", &Program::unlink },
     { "read line", &Program::readLine },
     { "write line", &Program::writeLine },
+    { "clear", &Program::clear },
     { "custom", &Program::custom },
 };
 
@@ -177,7 +182,20 @@ void* Program::remove(void) {
     if (::remove(path.c_str()) == 0)
         cout << "removed " << path << endl;
     else
-        throw "no that path";
+        cout << "errno: " << errno << endl;
+
+    return NULL;
+}
+
+void* Program::unlink(void) {
+    cout << "enter file path to unlink: ";
+
+    std::string path;
+    lmi_getline(cin, path);
+    if (::unlink(path.c_str()) == 0)
+        cout << "unlinkd " << path << endl;
+    else
+        cout << "errno: " << errno << endl;
 
     return NULL;
 }
@@ -222,19 +240,27 @@ void* Program:: writeLine(void) {
     return NULL;
 }
 
+void* Program::clear(void) {
+    this->input.clear();
+    this->output.clear();
+    cout << "cleared input" << endl;
+    cout << "cleared output" << endl;
+
+    return NULL;
+}
 
 
-// MARK: - static
+// MARK: - program
 void Program::mainLoop(void) {
     std::string line;
 
     while (true) {
         cout << endl << "enable command list:" << endl;
         Program::describeMethodCommand();
+        cout << "----------" << endl;
         cout << "enter command: ";
 
         lmi_getline(cin, line);
-        cout << "----------" << endl;
 
         unsigned long i;
         for (i = 0; i < sizeof(methodDictionary) / sizeof(MethodPair); ++i) {
@@ -256,6 +282,7 @@ void Program::mainLoop(void) {
     }
 }
 
+// MARK: - static
 void Program::describeMethodCommand(void) {
     for (unsigned long i = 0; i < sizeof(methodDictionary) / sizeof(MethodPair); ++i) {
         const MethodPair& pair = methodDictionary[i];
